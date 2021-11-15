@@ -12,6 +12,8 @@ type Cars = {
 }
 
 export default () => {
+  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [userName, setUserName] = useState(localStorage.getItem('username'))
 
   const [cars, setCars] = useState<Cars[]>([])
   const [loading, setLoading] = useState(false)
@@ -50,31 +52,6 @@ export default () => {
     setYear(e.target.value)
   }
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    let url = 'https://api.b7web.com.br/carros/api/auth/register'
-
-    let result = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: nameRegister,
-        email: emailRegister,
-        password: passwordRegister
-      })
-    })
-    let json = await result.json()
-
-    if(json.error === '') {
-      console.log('RESULT', json)
-    } else {
-      alert( json.error )
-    }
-  }
-
   const handleloginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -95,9 +72,42 @@ export default () => {
 
     if(json.error != '') {
       alert( json.error )
+    } else {
+      localStorage.setItem('token', json.token);
+      localStorage.setItem('username', json.user.name);
+      setToken(json.token);
+      setUserName(json.user.name);
     }
 
     console.log('RESULT', json)
+  }
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    let url = 'https://api.b7web.com.br/carros/api/auth/register'
+
+    let result = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: nameRegister,
+        email: emailRegister,
+        password: passwordRegister
+      })
+    })
+    let json = await result.json()
+
+    if(json.error != '') {
+      alert(json.error);
+    } else {
+      localStorage.setItem('token', json.token);
+      localStorage.setItem('username', json.user.name);
+      setToken(json.token);
+      setUserName(json.user.name);
+    }
   }
 
   const handleLogin = () => {
@@ -110,51 +120,68 @@ export default () => {
     setLogin(false)
   }
 
+  const handleLogout = () => {
+    setToken('')
+    setUserName('')
+    localStorage.setItem('token', '')
+    localStorage.setItem('username', '')
+  }
+
   return (
     <div>
       <button onClick={handleLogin}>Login</button>
       <button onClick={handleRegister}>Cadastro</button>
 
-      {register && 
-        <form onSubmit={handleRegisterSubmit}>
-        <h2>Faça Cadastro</h2>
-        <label>
-          Nome:
-          <input type="text" value={nameRegister} onChange={e=>setName(e.target.value)}/>
-        </label> <br/>
+      {!token &&
+        <div>
+          {register && 
+            <form onSubmit={handleRegisterSubmit}>
+            <h2>Faça Cadastro</h2>
+            <label>
+              Nome:
+              <input type="text" value={nameRegister} onChange={e=>setName(e.target.value)}/>
+            </label> <br/>
 
-        <label>
-          E-mail:
-          <input type="email" value={emailRegister} onChange={e=>setEmailRegister(e.target.value)}/>
-        </label> <br/>
+            <label>
+              E-mail:
+              <input type="email" value={emailRegister} onChange={e=>setEmailRegister(e.target.value)}/>
+            </label> <br/>
 
-        <label>
-          Senha:
-          <input type="password" value={passwordRegister} onChange={e=>setPasswordRegister(e.target.value)}/>
-        </label> <br/>
+            <label>
+              Senha:
+              <input type="password" value={passwordRegister} onChange={e=>setPasswordRegister(e.target.value)}/>
+            </label> <br/>
 
-        <input type="submit" value="Enviar"/>
-      </form>
+            <input type="submit" value="Enviar"/>
+          </form>
+          }
+
+
+          {login &&
+          <form onSubmit={handleloginSubmit}>
+            <h2>Faça Login</h2>
+            <label>
+              E-mail:
+              <input type="email" value={emailField} onChange={e=>setEmailField(e.target.value)}/>
+            </label> <br/>
+
+            <label>
+              Senha:
+              <input type="password" value={passwordField} onChange={e=>setPassword(e.target.value)}/>
+            </label> <br/>
+
+            <input type="submit" value="Enviar"/>
+          </form>
+          }
+        </div>
       }
 
-
-      {login &&
-      <form onSubmit={handleloginSubmit}>
-        <h2>Faça Login</h2>
-        <label>
-          E-mail:
-          <input type="email" value={emailField} onChange={e=>setEmailField(e.target.value)}/>
-        </label> <br/>
-
-        <label>
-          Senha:
-          <input type="password" value={passwordField} onChange={e=>setPassword(e.target.value)}/>
-        </label> <br/>
-
-        <input type="submit" value="Enviar"/>
-      </form>
+      {token &&
+        <div>
+          <h3>Olá, {userName}</h3>
+          <button onClick={handleLogout}>Sair</button>
+        </div>
       }
-
       <hr />
 
       <h1>Lista de Carros</h1>
