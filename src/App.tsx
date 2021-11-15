@@ -16,9 +16,15 @@ export default () => {
   const [cars, setCars] = useState<Cars[]>([])
   const [loading, setLoading] = useState(false)
   const [year, setYear] = useState('')
+  const [register, setRegister] = useState(false)
+  const [login, setLogin] = useState(true)
 
   const [emailField, setEmailField] = useState('')
   const [passwordField, setPassword] = useState('')
+
+  const [nameRegister, setName] = useState('')
+  const [emailRegister, setEmailRegister] = useState('')
+  const [passwordRegister, setPasswordRegister] = useState('')
 
   const getCars  = async () => {
     setLoading(true);
@@ -42,6 +48,31 @@ export default () => {
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setYear(e.target.value)
+  }
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    let url = 'https://api.b7web.com.br/carros/api/auth/register'
+
+    let result = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: nameRegister,
+        email: emailRegister,
+        password: passwordRegister
+      })
+    })
+    let json = await result.json()
+
+    if(json.error === '') {
+      console.log('RESULT', json)
+    } else {
+      alert( json.error )
+    }
   }
 
   const handleloginSubmit = async (e: React.FormEvent) => {
@@ -69,11 +100,47 @@ export default () => {
     console.log('RESULT', json)
   }
 
+  const handleLogin = () => {
+    setRegister(false)
+    setLogin(true)
+  }
+
+  const handleRegister = () => {
+    setRegister(true)
+    setLogin(false)
+  }
+
   return (
     <div>
+      <button onClick={handleLogin}>Login</button>
+      <button onClick={handleRegister}>Cadastro</button>
 
-      <h2>Faça Login</h2>
+      {register && 
+        <form onSubmit={handleRegisterSubmit}>
+        <h2>Faça Cadastro</h2>
+        <label>
+          Nome:
+          <input type="text" value={nameRegister} onChange={e=>setName(e.target.value)}/>
+        </label> <br/>
+
+        <label>
+          E-mail:
+          <input type="email" value={emailRegister} onChange={e=>setEmailRegister(e.target.value)}/>
+        </label> <br/>
+
+        <label>
+          Senha:
+          <input type="password" value={passwordRegister} onChange={e=>setPasswordRegister(e.target.value)}/>
+        </label> <br/>
+
+        <input type="submit" value="Enviar"/>
+      </form>
+      }
+
+
+      {login &&
       <form onSubmit={handleloginSubmit}>
+        <h2>Faça Login</h2>
         <label>
           E-mail:
           <input type="email" value={emailField} onChange={e=>setEmailField(e.target.value)}/>
@@ -86,6 +153,7 @@ export default () => {
 
         <input type="submit" value="Enviar"/>
       </form>
+      }
 
       <hr />
 
