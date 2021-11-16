@@ -1,4 +1,5 @@
-import React, { FormEventHandler, FormHTMLAttributes, SelectHTMLAttributes, useEffect, useState } from "react"
+import React, { FormEventHandler, FormHTMLAttributes, SelectHTMLAttributes, useEffect, useState, useRef, RefObject, Ref, InputHTMLAttributes } from "react"
+import api from './api'
 
 type Cars = {
     [tag: string]: { 
@@ -12,27 +13,42 @@ type Cars = {
 }
 
 export default () => {
+  const photoField = useRef<any>()
+
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [userName, setUserName] = useState(localStorage.getItem('username'))
 
-  const [cars, setCars] = useState<Cars[]>([])
-  const [loading, setLoading] = useState(false)
+
+  const [newCarBrand, setNewCarBrand] = useState('');
+  const [newCarName, setNewCarName] = useState('');
+  const [newCarYear, setNewCarYear] = useState('');
+  const [newCarPrice, setNewCarPrice] = useState('');
+
+
+  const [cars, setCars] = useState<Cars[]>([]);
+  const [loading, setLoading] = useState(false);
   const [year, setYear] = useState('')
-  const [register, setRegister] = useState(false)
-  const [login, setLogin] = useState(true)
 
-  const [emailField, setEmailField] = useState('')
-  const [passwordField, setPassword] = useState('')
 
-  const [nameRegister, setName] = useState('')
-  const [emailRegister, setEmailRegister] = useState('')
-  const [passwordRegister, setPasswordRegister] = useState('')
+  const [register, setRegister] = useState(false);
+  const [login, setLogin] = useState(true);
+
+  const [emailField, setEmailField] = useState('');
+  const [passwordField, setPassword] = useState('');
+
+  const [nameRegister, setName] = useState('');
+  const [emailRegister, setEmailRegister] = useState('');
+  const [passwordRegister, setPasswordRegister] = useState('');
 
   const getCars  = async () => {
     setLoading(true);
 
-    let result = await fetch(`https://api.b7web.com.br/carros/api/carros?ano=${year}`)
-    let json = await result.json()
+    let {data: json} = await api.get(`carros?ano=${year}`);
+    
+
+
+    /*let result = await fetch(`https://api.b7web.com.br/carros/api/carros?ano=${year}`)
+    let json = await result.json()*/
 
     setLoading(false)
 
@@ -44,10 +60,6 @@ export default () => {
 
   }
 
-  useEffect(()=>{
-    getCars()
-  }, [year])
-
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setYear(e.target.value)
   }
@@ -55,7 +67,12 @@ export default () => {
   const handleloginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let url = 'https://api.b7web.com.br/carros/api/auth/login'
+    let { data:json } = await api.post('auth/login', {
+      email: emailField,
+      password: passwordField
+    })
+
+    /* let url = 'https://api.b7web.com.br/carros/api/auth/login'
 
 
     let result = await fetch(url, {
@@ -68,7 +85,7 @@ export default () => {
         password: passwordField
       })
     })
-    let json = await result.json()
+    let json = await result.json() */
 
     if(json.error != '') {
       alert( json.error )
@@ -85,7 +102,13 @@ export default () => {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    let url = 'https://api.b7web.com.br/carros/api/auth/register'
+    let {data:json} = await api.post('auth/register', {
+      name: nameRegister,
+      email: emailRegister,
+      password: passwordField
+    })
+
+    /* let url = 'https://api.b7web.com.br/carros/api/auth/register'
 
     let result = await fetch(url, {
       method: 'POST',
@@ -98,7 +121,7 @@ export default () => {
         password: passwordRegister
       })
     })
-    let json = await result.json()
+    let json = await result.json() */
 
     if(json.error != '') {
       alert(json.error);
@@ -126,6 +149,46 @@ export default () => {
     localStorage.setItem('token', '')
     localStorage.setItem('username', '')
   }
+
+  const handleAddCarSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    let body = new FormData()
+
+    body.append('brand', newCarBrand);
+    body.append('name', newCarName);
+    body.append('year', newCarYear);
+    body.append('price', newCarPrice);
+
+    if(photoField.current.files.length > 0) {
+      body.append('photo', photoField.current.files[0])
+    }
+
+
+    let result = await fetch('https://api.b7web.com.br/carros/api/carro', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body
+    });
+    let json = await result.json(); 
+
+    if(json.error !== '') {
+      alert("Ocorreu um erro!");
+      console.log(json.error);
+    } else {
+      alert("Carro adicionado com sucesso!");
+      setNewCarBrand('');
+      setNewCarName('');
+      setNewCarYear('');
+      setNewCarPrice('');
+    }
+  }
+
+  useEffect(()=>{
+    getCars()
+  }, [year])
 
   return (
     <div>
@@ -180,6 +243,31 @@ export default () => {
         <div>
           <h3>Olá, {userName}</h3>
           <button onClick={handleLogout}>Sair</button>
+
+          <form onSubmit={handleAddCarSubmit}>
+            <h4>Adicionar Carro</h4>
+            <label>
+              Marca do Carro:
+              <input type="text" value={newCarBrand} onChange={e=>setNewCarBrand(e.target.value)}/>
+            </label> <br />
+            <label>
+              Nome do Carro:
+              <input type="text" value={newCarName} onChange={e=>setNewCarName(e.target.value)}/>
+            </label> <br />
+            <label>
+              Ano do Carro:
+              <input type="text" value={newCarYear} onChange={e=>setNewCarYear(e.target.value)}/>
+            </label> <br />
+            <label>
+              Preço do carro:
+              <input type="text" value={newCarPrice} onChange={e=>setNewCarPrice(e.target.value)}/>
+            </label> <br />
+            <label>
+              Foto:
+              <input ref={photoField} type="file" />
+            </label> <br />
+            <input type="submit"/>
+          </form>
         </div>
       }
       <hr />
