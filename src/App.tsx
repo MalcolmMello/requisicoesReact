@@ -43,10 +43,8 @@ export default () => {
   const getCars  = async () => {
     setLoading(true);
 
-    let {data: json} = await api.get(`carros?ano=${year}`);
+    let json = await api.getCarList(year)
     
-
-
     /*let result = await fetch(`https://api.b7web.com.br/carros/api/carros?ano=${year}`)
     let json = await result.json()*/
 
@@ -67,10 +65,7 @@ export default () => {
   const handleloginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let { data:json } = await api.post('auth/login', {
-      email: emailField,
-      password: passwordField
-    })
+    let json = await api.login(emailField, passwordField)
 
     /* let url = 'https://api.b7web.com.br/carros/api/auth/login'
 
@@ -102,11 +97,7 @@ export default () => {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    let {data:json} = await api.post('auth/register', {
-      name: nameRegister,
-      email: emailRegister,
-      password: passwordField
-    })
+    let json = await api.register(nameRegister, emailRegister, passwordRegister)
 
     /* let url = 'https://api.b7web.com.br/carros/api/auth/register'
 
@@ -164,15 +155,20 @@ export default () => {
       body.append('photo', photoField.current.files[0])
     }
 
+    let photo = null
 
-    let result = await fetch('https://api.b7web.com.br/carros/api/carro', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body
-    });
-    let json = await result.json(); 
+    if(photoField.current.files.length > 0) {
+      photo = photoField.current.files[0]
+    }
+
+    let json = await api.addNewCar(
+      newCarBrand,
+      newCarName,
+      newCarYear,
+      newCarPrice,
+      photo,
+      token
+    )
 
     if(json.error !== '') {
       alert("Ocorreu um erro!");
